@@ -1,0 +1,653 @@
+## Intro
+
+React Hooks are functions that allow you to use state and other React features in functional components. They were introduced in React 16.8 to address several key issues and provide more flexibility in writing components. Here's an overview of why we need hooks in function components:
+
+1. State management:
+Before hooks, only class components could manage their own state. The useState hook allows functional components to have local state, making them more powerful and flexible.
+
+2. Side effects:
+The useEffect hook lets you perform side effects (like data fetching, subscriptions, or DOM manipulation) in functional components. This replaces lifecycle methods like componentDidMount, componentDidUpdate, and componentWillUnmount.
+
+3. Context consumption:
+The useContext hook provides an easier way to consume context in functional components without wrapping them in Consumer components.
+
+4. Reusable logic:
+Custom hooks allow you to extract component logic into reusable functions, promoting better code organization and sharing stateful logic between components without changing their structure.
+
+5. Avoiding class complexity:
+Classes can be confusing for both humans and machines. Hooks allow you to use more of React's features without classes, simplifying the component model.
+
+6. Avoiding wrapper hell:
+Hooks help in avoiding deeply nested component trees that result from using higher-order components and render props for sharing stateful logic.
+
+7. Optimizing performance:
+Hooks like useMemo and useCallback help in optimizing performance by memoizing values and callbacks.
+
+## Exercise
+
+1. Create a custom hook `useWindowSize` that returns the current window dimensions and updates when the window is resized.
+    import { useState, useEffect } from 'react';
+
+function useWindowSize() {
+  const [windowSize, setWindowSize] = useState({
+    width: window.innerWidth,
+    height: window.innerHeight,
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowSize({
+        width: window.innerWidth,
+        height: window.innerHeight,
+      });
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return windowSize;
+}
+
+2. Implement a `useDebounce` hook that delays invoking a function until after a certain amount of time has elapsed since the last time it was invoked.
+import { useState, useEffect } from 'react';
+
+    function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+3. Build a `useFetch` hook that handles API calls, including loading and error states.
+    import { useState, useEffect } from 'react';
+
+function useFetch(url) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const result = await response.json();
+        setData(result);
+      } catch (error) {
+        setError(error);
+      }
+      setLoading(false);
+    };
+
+    fetchData();
+  }, [url]);
+
+  return { data, loading, error };
+}
+
+4. Create a `useLocalStorage` hook that allows components to easily save and retrieve data from localStorage.
+    import { useState } from 'react';
+
+function useLocalStorage(key, initialValue) {
+  const [storedValue, setStoredValue] = useState(() => {
+    try {
+      const item = window.localStorage.getItem(key);
+      return item ? JSON.parse(item) : initialValue;
+    } catch (error) {
+      console.error(error);
+      return initialValue;
+    }
+  });
+
+  const setValue = (value) => {
+    try {
+      setStoredValue(value);
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return [storedValue, setValue];
+}
+
+5. Implement a `useTheme` hook that allows components to switch between light and dark modes.
+    import { useState } from 'react';
+
+function useTheme() {
+  const [theme, setTheme] = useState('light');
+
+  const toggleTheme = () => {
+    setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'));
+  };
+
+  return { theme, toggleTheme };
+}
+
+6. Build a `useForm` hook that handles form state, validation, and submission.
+    import { useState } from 'react';
+
+function useForm(initialValues) {
+  const [values, setValues] = useState(initialValues);
+
+  const handleChange = (event) => {
+    setValues({
+      ...values,
+      [event.target.name]: event.target.value,
+    });
+  };
+
+  const handleSubmit = (callback) => (event) => {
+    event.preventDefault();
+    callback(values);
+  };
+
+  return { values, handleChange, handleSubmit };
+}
+
+7. Create a `useIntersectionObserver` hook to detect when an element enters or leaves the viewport.
+    import { useEffect, useState } from 'react';
+
+function useIntersectionObserver(ref, options) {
+  const [isIntersecting, setIsIntersecting] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsIntersecting(entry.isIntersecting),
+      options
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, [ref, options]);
+
+  return isIntersecting;
+}
+
+8. Implement a `useMediaQuery` hook that returns a boolean based on whether a media query matches or not.
+    import { useState, useEffect } from 'react';
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia(query);
+    if (media.matches !== matches) setMatches(media.matches);
+
+    const listener = () => setMatches(media.matches);
+    media.addListener(listener);
+    return () => media.removeListener(listener);
+  }, [matches, query]);
+
+  return matches;
+}
+
+9. Build a `usePrevious` hook that returns the previous value of a state or prop.
+    import { useRef, useEffect } from 'react';
+
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+
+  return ref.current;
+}
+
+10. Create a `useKeyPress` hook that detects when a specific key is pressed.
+    import { useState, useEffect } from 'react';
+
+function useKeyPress(targetKey) {
+  const [keyPressed, setKeyPressed] = useState(false);
+
+  useEffect(() => {
+    const downHandler = ({ key }) => {
+      if (key === targetKey) setKeyPressed(true);
+    };
+
+    const upHandler = ({ key }) => {
+      if (key === targetKey) setKeyPressed(false);
+    };
+
+    window.addEventListener('keydown', downHandler);
+    window.addEventListener('keyup', upHandler);
+
+    return () => {
+      window.removeEventListener('keydown', downHandler);
+      window.removeEventListener('keyup', upHandler);
+    };
+  }, [targetKey]);
+
+  return keyPressed;
+}
+
+11. Implement a `useOnClickOutside` hook that handles clicking outside of a specified element.
+    import { useEffect } from 'react';
+
+function useOnClickOutside(ref, handler) {
+  useEffect(() => {
+    const listener = (event) => {
+      if (!ref.current || ref.current.contains(event.target)) {
+        return;
+      }
+      handler(event);
+    };
+
+    document.addEventListener('mousedown', listener);
+    return () => document.removeEventListener('mousedown', listener);
+  }, [ref, handler]);
+}
+
+12. Build a `useGeolocation` hook that provides the user's current location.
+    import { useState, useEffect } from 'react';
+
+function useGeolocation() {
+  const [location, setLocation] = useState({ lat: null, lon: null });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+
+    const success = ({ coords }) => {
+      setLocation({ lat: coords.latitude, lon: coords.longitude });
+    };
+
+    const error = () => setLocation({ lat: null, lon: null });
+
+    navigator.geolocation.getCurrentPosition(success, error);
+  }, []);
+
+  return location;
+}
+
+13. Create a `useCopyToClipboard` hook that copies text to the clipboard and manages the copy state.
+    import { useState } from 'react';
+
+function useCopyToClipboard() {
+  const [isCopied, setIsCopied] = useState(false);
+
+  const copy = (text) => {
+    navigator.clipboard.writeText(text).then(() => setIsCopied(true));
+  };
+
+  return { isCopied, copy };
+}
+
+14. Implement a `useTimer` hook that provides start, pause, and reset functionality for a countdown timer.
+    import { useState, useRef } from 'react';
+
+function useTimer(initialSeconds = 0) {
+  const [seconds, setSeconds] = useState(initialSeconds);
+  const timerRef = useRef(null);
+
+  const start = () => {
+    if (!timerRef.current) {
+      timerRef.current = setInterval(() => setSeconds((s) => s + 1), 1000);
+    }
+  };
+
+  const pause = () => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  };
+
+  const reset = () => {
+    pause();
+    setSeconds(0);
+  };
+
+  return { seconds, start, pause, reset };
+}
+
+15. Build a `usePagination` hook that manages pagination state for a list of items.
+    import { useState } from 'react';
+
+function usePagination(totalItems, itemsPerPage) {
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const nextPage = () => setCurrentPage((page) => Math.min(page + 1, totalPages));
+  const prevPage = () => setCurrentPage((page) => Math.max(page - 1, 1));
+
+  return { currentPage, totalPages, nextPage, prevPage };
+}
+
+16. Create a `useInfiniteScroll` hook that loads more data as the user scrolls to the bottom of the page.
+    import { useEffect } from 'react';
+
+function useInfiniteScroll(callback) {
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+        callback();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [callback]);
+}
+
+17. Implement a `useAnimationFrame` hook for smooth animations using `requestAnimationFrame`.
+    import { useEffect } from 'react';
+
+function useAnimationFrame(callback) {
+  useEffect(() => {
+    let frameId;
+
+    const loop = () => {
+      callback();
+      frameId = requestAnimationFrame(loop);
+    };
+
+    frameId = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frameId);
+  }, [callback]);
+}
+
+18. Build a `useEventListener` hook that adds and removes event listeners to the DOM.
+    import { useEffect } from 'react';
+
+function useEventListener(eventName, handler, element = window) {
+  useEffect(() => {
+    if (!element) return;
+
+19. Create a `useDarkMode` hook that manages a site-wide dark mode preference.
+    import { useState, useEffect } from 'react';
+
+function useDarkMode() {
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('darkMode') === 'true';
+  });
+
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    localStorage.setItem('darkMode', isDarkMode);
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
+
+  return { isDarkMode, toggleDarkMode };
+}
+
+20. Implement a `useHover` hook that detects when an element is being hovered over.
+    import { useState, useRef, useEffect } from 'react';
+
+function useHover() {
+  const [hovered, setHovered] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (node) {
+      const handleMouseOver = () => setHovered(true);
+      const handleMouseOut = () => setHovered(false);
+
+      node.addEventListener('mouseover', handleMouseOver);
+      node.addEventListener('mouseout', handleMouseOut);
+
+      return () => {
+        node.removeEventListener('mouseover', handleMouseOver);
+        node.removeEventListener('mouseout', handleMouseOut);
+      };
+    }
+  }, [ref]);
+
+  return [ref, hovered];
+}
+
+21. Build a `useOnlineStatus` hook that tracks whether the user is online or offline.
+    import { useState, useEffect } from 'react';
+
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
+22. Create a `useResizeObserver` hook that monitors changes to an element's dimensions.
+    import { useState, useEffect, useRef } from 'react';
+
+function useResizeObserver() {
+  const [size, setSize] = useState({});
+  const ref = useRef();
+
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      if (entries.length > 0) {
+        const { width, height } = entries[0].contentRect;
+        setSize({ width, height });
+      }
+    });
+
+    const element = ref.current;
+    if (element) {
+      observer.observe(element);
+    }
+
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return [ref, size];
+}
+
+23. Implement a `useAsync` hook that manages the state of an asynchronous operation.
+    import { useState, useEffect } from 'react';
+
+function useAsync(asyncFunction, dependencies = []) {
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const executeAsync = async () => {
+      setLoading(true);
+      try {
+        const result = await asyncFunction();
+        if (isMounted) setData(result);
+      } catch (err) {
+        if (isMounted) setError(err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    executeAsync();
+
+    return () => { isMounted = false; };
+  }, dependencies);
+
+  return { data, loading, error };
+}
+
+24. Build a `useStateWithHistory` hook that keeps track of a state's history and allows undo/redo operations.
+    import { useState } from 'react';
+
+function useStateWithHistory(initialValue) {
+  const [history, setHistory] = useState([initialValue]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+
+  const setState = (value) => {
+    const newHistory = history.slice(0, currentIndex + 1);
+    setHistory([...newHistory, value]);
+    setCurrentIndex(newHistory.length);
+  };
+
+  const undo = () => {
+    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+  };
+
+  const redo = () => {
+    if (currentIndex < history.length - 1) setCurrentIndex(currentIndex + 1);
+  };
+
+  return [history[currentIndex], setState, undo, redo];
+}
+
+25. Create a `useLongPress` hook that detects long-press events on elements.
+    import { useState, useEffect } from 'react';
+
+function useLongPress(callback = () => {}, ms = 300) {
+  const [startLongPress, setStartLongPress] = useState(false);
+
+  useEffect(() => {
+    let timerId;
+    if (startLongPress) {
+      timerId = setTimeout(callback, ms);
+    } else {
+      clearTimeout(timerId);
+    }
+
+    return () => clearTimeout(timerId);
+  }, [startLongPress]);
+
+  const start = () => setStartLongPress(true);
+  const stop = () => setStartLongPress(false);
+
+  return { onMouseDown: start, onMouseUp: stop, onMouseLeave: stop, onTouchStart: start, onTouchEnd: stop };
+}
+
+26. Implement a `useIdle` hook that detects when the user has been inactive for a specified time.
+    import { useState, useEffect } from 'react';
+
+function useIdle(timeout) {
+  const [isIdle, setIsIdle] = useState(false);
+
+  useEffect(() => {
+    let timer;
+
+    const resetTimer = () => {
+      clearTimeout(timer);
+      setIsIdle(false);
+      timer = setTimeout(() => setIsIdle(true), timeout);
+    };
+
+    window.addEventListener('mousemove', resetTimer);
+    window.addEventListener('keypress', resetTimer);
+
+    timer = setTimeout(() => setIsIdle(true), timeout);
+
+    return () => {
+      window.removeEventListener('mousemove', resetTimer);
+      window.removeEventListener('keypress', resetTimer);
+      clearTimeout(timer);
+    };
+  }, [timeout]);
+
+  return isIdle;
+}
+
+27. Build a `useWhyDidYouUpdate` hook for debugging purposes to see which props caused a component to re-render.
+    import { useEffect, useRef } from 'react';
+
+function useWhyDidYouUpdate(name, props) {
+  const previousProps = useRef(props);
+
+  useEffect(() => {
+    const allKeys = Object.keys({ ...previousProps.current, ...props });
+    const changes = {};
+
+    allKeys.forEach((key) => {
+      if (previousProps.current[key] !== props[key]) {
+        changes[key] = { from: previousProps.current[key], to: props[key] };
+      }
+    });
+
+    if (Object.keys(changes).length) {
+      console.log(`[useWhyDidYouUpdate] ${name}`, changes);
+    }
+
+    previousProps.current = props;
+  });
+}
+
+28. Create a `useDragAndDrop` hook that handles drag and drop functionality for elements.
+    import { useState } from 'react';
+
+function useDragAndDrop() {
+  const [isDragging, setIsDragging] = useState(false);
+
+  const onDragStart = (e) => {
+    setIsDragging(true);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const onDragEnd = () => setIsDragging(false);
+
+  const onDrop = (callback) => (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    callback(e);
+  };
+
+  const onDragOver = (e) => e.preventDefault();
+
+  return { isDragging, onDragStart, onDragEnd, onDrop, onDragOver };
+}
+
+29. Implement a `useBreakpoint` hook that returns the current responsive breakpoint based on window size.
+    import { useState, useEffect } from 'react';
+
+function useBreakpoint() {
+  const [breakpoint, setBreakpoint] = useState(getBreakpoint());
+
+  function getBreakpoint() {
+    const width = window.innerWidth;
+    if (width < 576) return 'xs';
+    if (width < 768) return 'sm';
+    if (width < 992) return 'md';
+    if (width < 1200) return 'lg';
+    return 'xl';
+  }
+
+  useEffect(() => {
+    const handleResize = () => setBreakpoint(getBreakpoint());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  return breakpoint;
+}
+
+30. Build a `useMemoCompare` hook that memoizes a value and only updates it when a deep comparison indicates a change.
+    import { useRef, useEffect } from 'react';
+import isEqual from 'lodash/isEqual';
+
+function useMemoCompare(value, compareFn = isEqual) {
+  const previousValueRef = useRef();
+
+  if (!compareFn(previousValueRef.current, value)) {
+    previousValueRef.current = value;
+  }
+
+  return previousValueRef.current;
+}
